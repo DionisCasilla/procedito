@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:procredito/src/helper/gobalHelpper.dart';
 import 'package:signature/signature.dart';
 
 void main() {
@@ -61,6 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
   final _ciudad = TextEditingController();
   final _tel1 = TextEditingController();
   final _tel2 = TextEditingController();
+  bool isSwitched = false;
+  var maskFormatterCedula = MaskTextInputFormatter(mask: '###-#######-#', filter: {"#": RegExp(r'[0-9]')});
+  var maskFormatterTelefono = MaskTextInputFormatter(mask: '+1########## ', filter: {"#": RegExp(r'[0-9]')}, type: MaskAutoCompletionType.lazy);
+
   final SignatureController _controller = SignatureController(
     penStrokeWidth: 2,
     penColor: Colors.black,
@@ -94,154 +99,186 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: SingleChildScrollView(
-            child: Column(
-              // Column is also a layout widget. It takes a list of children and
-              // arranges them vertically. By default, it sizes itself to fit its
-              // children horizontally, and tries to be as tall as its parent.
-              //
-              // Invoke "debug painting" (press "p" in the console, choose the
-              // "Toggle Debug Paint" action from the Flutter Inspector in Android
-              // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-              // to see the wireframe for each widget.
-              //
-              // Column has various properties to control how it sizes itself and
-              // how it positions its children. Here we use mainAxisAlignment to
-              // center the children vertically; the main axis here is the vertical
-              // axis because Columns are vertical (the cross axis would be
-              // horizontal).
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                TextField(
-                  controller: _email,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Email Destino',
-                  ),
-                ),
-                TextField(
-                  controller: _nombre,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Nombre',
-                  ),
-                ),
-                TextField(
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          child: Column(
+            // Column is also a layout widget. It takes a list of children and
+            // arranges them vertically. By default, it sizes itself to fit its
+            // children horizontally, and tries to be as tall as its parent.
+            //
+            // Invoke "debug painting" (press "p" in the console, choose the
+            // "Toggle Debug Paint" action from the Flutter Inspector in Android
+            // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+            // to see the wireframe for each widget.
+            //
+            // Column has various properties to control how it sizes itself and
+            // how it positions its children. Here we use mainAxisAlignment to
+            // center the children vertically; the main axis here is the vertical
+            // axis because Columns are vertical (the cross axis would be
+            // horizontal).
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              TextField(
                   controller: _cedula,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Cedula',
+                  decoration: InputDecoration(border: const UnderlineInputBorder(), labelText: 'Cedula', suffix: IconButton(onPressed: () => buscadoCedula(), icon: const Icon(Icons.search))),
+                  inputFormatters: [maskFormatterCedula],
+                  onSubmitted: (a) => buscadoCedula()),
+              const SizedBox(
+                height: 30,
+              ),
+              const Text("Metodo Envio Formulario"),
+              Row(
+                children: [
+                  const Text("SMS"),
+                  Switch(
+                    value: isSwitched,
+                    onChanged: (value) {
+                      setState(() {
+                        isSwitched = value;
+                      });
+                    },
                   ),
+                  const Text("EMAIL"),
+                ],
+              ),
+              TextField(
+                controller: _email,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Email Destino',
                 ),
-                TextField(
-                  controller: _ciudad,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Ciudad',
-                  ),
+              ),
+
+              TextField(
+                controller: _nombre,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Nombre',
                 ),
-                TextField(
-                  controller: _direccion,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Dirección',
-                  ),
+              ),
+
+              TextField(
+                controller: _ciudad,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Ciudad',
                 ),
-                TextField(
-                  controller: _tel1,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Celular',
-                  ),
+              ),
+              TextField(
+                controller: _direccion,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Dirección',
                 ),
-                TextField(
-                  controller: _tel2,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'Celular 2',
-                  ),
+              ),
+              TextField(
+                controller: _tel1,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Celular',
                 ),
-                SizedBox(
-                  height: 30,
+                inputFormatters: [maskFormatterTelefono],
+              ),
+              TextField(
+                controller: _tel2,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Celular 2',
                 ),
-                Signature(
-                  controller: _controller,
-                  height: 300,
-                  backgroundColor: Colors.lightBlueAccent,
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.undo),
-                      color: Colors.blue,
-                      onPressed: () {
-                        setState(() => _controller.undo());
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.redo),
-                      color: Colors.blue,
-                      onPressed: () {
-                        setState(() => _controller.redo());
-                      },
-                    ),
-                    //CLEAR CANVAS
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      color: Colors.blue,
-                      onPressed: () {
-                        setState(() => _controller.clear());
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.check),
-                      color: Colors.blue,
-                      onPressed: () async {
-                        if (_controller.isNotEmpty) {
-                          final Uint8List? data = await _controller.toPngBytes();
-                          if (data != null) {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (BuildContext context) {
-                                  return Scaffold(
-                                    appBar: AppBar(),
-                                    body: Center(
-                                      child: Container(
-                                        color: Colors.grey[300],
-                                        child: Image.memory(data),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  ],
-                )
-              ],
-            ),
+              ),
+              const SizedBox(
+                height: 30,
+              ),
+              // Signature(
+              //   controller: _controller,
+              //   height: 300,
+              //   backgroundColor: Colors.lightBlueAccent,
+              // ),
+              // Row(
+              //   children: [
+              //     IconButton(
+              //       icon: const Icon(Icons.undo),
+              //       color: Colors.blue,
+              //       onPressed: () {
+              //         setState(() => _controller.undo());
+              //       },
+              //     ),
+              //     IconButton(
+              //       icon: const Icon(Icons.redo),
+              //       color: Colors.blue,
+              //       onPressed: () {
+              //         setState(() => _controller.redo());
+              //       },
+              //     ),
+              //     //CLEAR CANVAS
+              //     IconButton(
+              //       icon: const Icon(Icons.clear),
+              //       color: Colors.blue,
+              //       onPressed: () {
+              //         setState(() => _controller.clear());
+              //       },
+              //     ),
+              //     IconButton(
+              //       icon: const Icon(Icons.check),
+              //       color: Colors.blue,
+              //       onPressed: () async {
+              //         if (_controller.isNotEmpty) {
+              //           final Uint8List? data = await _controller.toPngBytes();
+              //           if (data != null) {
+              //             await Navigator.of(context).push(
+              //               MaterialPageRoute<void>(
+              //                 builder: (BuildContext context) {
+              //                   return Scaffold(
+              //                     appBar: AppBar(),
+              //                     body: Center(
+              //                       child: Container(
+              //                         color: Colors.grey[300],
+              //                         child: Image.memory(data),
+              //                       ),
+              //                     ),
+              //                   );
+              //                 },
+              //               ),
+              //             );
+              //           }
+              //         }
+              //       },
+              //     ),
+              //   ],
+              // )
+            ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          //  try {
-          //   final kiosko = ConfigModel.instance.kioskoId; //"6140b1d96f9704f3465eeea6";
+          final _alerta = Alertas(ctn: context, titulo: "Enviando Formulario");
+          _alerta.showAlert();
+          if (isSwitched) {
+            if (_email.text == "") {
+              _alerta.disspose();
+              //  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              return;
+            }
+          } else {
+            if (_tel1.text == "") {
+              _alerta.disspose();
+              //ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              return;
+            }
+            // return;
+          }
+
           final _data = {
+            "tipoenvio": !isSwitched ? 1 : 2,
             "emailDestino": _email.text,
             "infoCliente": {
               "nombre": _nombre.text,
               "cedula": _cedula.text,
               "direccion": _direccion.text,
-              "celular": _tel1.text,
+              "celular": "+1" + _tel1.text.replaceAll("-", ""),
               "ciudad": _ciudad.text,
               "celular2": _tel2.text,
               "dia": DateTime.now().day,
@@ -250,15 +287,68 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           };
 
+          // print(jsonEncode(_data));
+
           final respuesta = await http.post(Uri.parse("https://itmsrdbackend.herokuapp.com/procredito/submitForm"),
               headers: {"Content-Type": "application/json; charset=utf-8", 'Accept': 'application/json'}, body: jsonEncode(_data));
+          _alerta.disspose();
           final decodedata = json.decode(respuesta.body);
-
-          print(decodedata);
+          if (decodedata["success"]) {
+            setState(() {
+              resetValues();
+            });
+            final _alerta = Alertas(ctn: context, titulo: "Formulario Enviado", tipo: 2);
+            _alerta.showAlert();
+            await Future.delayed(const Duration(seconds: 3));
+            _alerta.disspose();
+          } else {
+            final _alerta = Alertas(ctn: context, titulo: decodedata["message"], tipo: 3);
+            _alerta.showAlert();
+            await Future.delayed(const Duration(seconds: 3));
+            _alerta.disspose();
+          }
+          // print(decodedata);
         },
         tooltip: 'Enviar',
         child: const Icon(Icons.send),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  buscadoCedula() async {
+    final _alerta = Alertas(ctn: context, titulo: "Consultando...");
+    _alerta.showAlert();
+    final respuesta = await http.get(
+      Uri.parse("https://itmsrdbackend.herokuapp.com/procredito/bcedula/${_cedula.text}"),
+      headers: {"Content-Type": "application/json; charset=utf-8", 'Accept': 'application/json'},
+    );
+    final decodedata = json.decode(respuesta.body);
+    print(decodedata["success"]);
+    _alerta.disspose();
+    if (decodedata["success"]) {
+      _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
+      _direccion.text = decodedata["result"]["cliente"]["DIRECCION"];
+      _tel1.text = decodedata["result"]["cliente"]["TELEFONO"];
+      // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
+      // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
+      // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
+      // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
+    } else {
+      final _alerta = Alertas(ctn: context, titulo: decodedata["message"], tipo: 3);
+      _alerta.showAlert();
+      await Future.delayed(const Duration(seconds: 3));
+      _alerta.disspose();
+    }
+  }
+
+  resetValues() {
+    isSwitched = false;
+    _nombre.text = "";
+    _email.text = "";
+    _cedula.text = "";
+    _direccion.text = "";
+    _ciudad.text = "";
+    _tel1.text = "";
+    _tel2.text = "";
   }
 }
