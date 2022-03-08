@@ -48,6 +48,27 @@ class GlobalHelpper {
     return string[0].toUpperCase() + string.substring(1);
   }
 
+  String cedulaFormat(String string) {
+    String _string = "";
+    if (string == null) {
+      throw ArgumentError.notNull('string');
+    }
+
+    if (string.isEmpty) {
+      return string;
+    }
+
+    if (string.length == 13 && string.contains("-")) {
+      _string = string;
+    }
+
+    if (string.length == 11) {
+      _string = string.substring(0, 2) + "-" + string.substring(3, 10) + "-" + string.substring(string.length, -1);
+    }
+
+    return _string;
+  }
+
   Future<void> seleccionFecha({required BuildContext context, TextEditingController? txtController, int tipo = 0, String? fORMATDATE = "dd/MM/yyyy"}) async {
     DatePicker.showDatePicker(
       context,

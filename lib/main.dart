@@ -1,23 +1,24 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:procredito/src/helper/gobalHelpper.dart';
+import 'package:procredito/src/router/router.dart';
 import 'package:signature/signature.dart';
 
 void main() {
-  runApp(const MyApp());
+  Flurorouter.configureRouter();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Procredito Envio de Contratos',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -30,13 +31,14 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Procredito Envio de Contratos'),
+      onGenerateRoute: Flurorouter.router.generator,
+      initialRoute: "/",
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title, this.documento = ""}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -48,6 +50,7 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
 
   final String title;
+  final String documento;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -63,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _tel1 = TextEditingController();
   final _tel2 = TextEditingController();
   bool isSwitched = false;
+
   var maskFormatterCedula = MaskTextInputFormatter(mask: '###-#######-#', filter: {"#": RegExp(r'[0-9]')});
   var maskFormatterTelefono = MaskTextInputFormatter(mask: '+1########## ', filter: {"#": RegExp(r'[0-9]')}, type: MaskAutoCompletionType.lazy);
 
@@ -73,6 +77,19 @@ class _MyHomePageState extends State<MyHomePage> {
     onDrawStart: () => print('onDrawStart called!'),
     onDrawEnd: () => print('onDrawEnd called!'),
   );
+
+  @override
+  void initState() {
+    // TODO: implement initState
+
+    super.initState();
+    if (widget.documento != "" && widget.documento != "/") {
+      _cedula.text = GlobalHelpper().cedulaFormat(widget.documento);
+      WidgetsBinding.instance?.addPostFrameCallback((_) => buscadoCedula()
+          //Future.delayed(Duration(seconds: 3), () => yourFunction());
+          );
+    }
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -150,7 +167,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   labelText: 'Email Destino',
                 ),
               ),
-
               TextField(
                 controller: _nombre,
                 decoration: const InputDecoration(
@@ -158,7 +174,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   labelText: 'Nombre',
                 ),
               ),
-
               TextField(
                 controller: _ciudad,
                 decoration: const InputDecoration(
@@ -254,23 +269,27 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final _alerta = Alertas(ctn: context, titulo: "Enviando Formulario");
-          _alerta.showAlert();
           if (isSwitched) {
             if (_email.text == "") {
+              final _alerta = Alertas(ctn: context, titulo: "Email es requerido", tipo: 3);
+              _alerta.showAlert();
+              await Future.delayed(const Duration(seconds: 3));
               _alerta.disspose();
-              //  ScaffoldMessenger.of(context).showSnackBar(snackBar);
               return;
             }
           } else {
             if (_tel1.text == "") {
+              final _alerta = Alertas(ctn: context, titulo: "Celular es requerido", tipo: 3);
+              _alerta.showAlert();
+              await Future.delayed(const Duration(seconds: 3));
               _alerta.disspose();
-              //ScaffoldMessenger.of(context).showSnackBar(snackBar);
               return;
             }
             // return;
           }
 
+          final _alerta = Alertas(ctn: context, titulo: "Enviando Formulario");
+          _alerta.showAlert();
           final _data = {
             "tipoenvio": !isSwitched ? 1 : 2,
             "emailDestino": _email.text,
@@ -278,7 +297,7 @@ class _MyHomePageState extends State<MyHomePage> {
               "nombre": _nombre.text,
               "cedula": _cedula.text,
               "direccion": _direccion.text,
-              "celular": "+1" + _tel1.text.replaceAll("-", ""),
+              "celular": "+1" + _tel1.text.replaceAll("-", "").replaceAll('+1', ""),
               "ciudad": _ciudad.text,
               "celular2": _tel2.text,
               "dia": DateTime.now().day,
@@ -323,12 +342,12 @@ class _MyHomePageState extends State<MyHomePage> {
       headers: {"Content-Type": "application/json; charset=utf-8", 'Accept': 'application/json'},
     );
     final decodedata = json.decode(respuesta.body);
-    print(decodedata["success"]);
+    // print(decodedata["success"]);
     _alerta.disspose();
     if (decodedata["success"]) {
       _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
       _direccion.text = decodedata["result"]["cliente"]["DIRECCION"];
-      _tel1.text = decodedata["result"]["cliente"]["TELEFONO"];
+      _tel1.text = decodedata["result"]["cliente"]["TELEFONO"].toString().replaceAll('+1', "");
       // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
       // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
       // _nombre.text = decodedata["result"]["cliente"]["NOMBRE"];
